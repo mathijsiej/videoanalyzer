@@ -7,6 +7,7 @@
 var VideoAnalyzer = {
 	
 	// variables
+	currentTool: 0,	timeout: false, currentWidth: 0, currentHeight: 0, speed: 1,
 	main: $("#main"),drawFrame: $("#drawFrame"),videoFrame: $("#videoFrame"),video: $("#video"),tools: $("#tools"), controls: $("#controls"),
 	
 	// contexts
@@ -16,22 +17,22 @@ var VideoAnalyzer = {
 	config: {
 		width: 1280,
 		height: 760,
-		toolset: ['line','arrowFixed','arrowFree']				
-	}, 
-	
-	currentTool: 0,
-	timeout: false,
+		toolset: ['line','arrowFixed','arrowFree']			
+	}, 	
 	
 	// initialize
 	init: function(config){
 		$.extend(this.config,config);
+		this.currentWidth =  this.config.width;  
+		this.currentHeight = this.config.height;	
 		this.crossOrigin();			
 		this.setSizes();
 		this.checkVideoState();
 		this.showTools();					
 		this.scaleSizes();
 		this.controlBtns();	
-		VideoAnalyzer.video.get(0).pause();
+		this.video.get(0).pause();
+		this.video.get(0).playbackRate = this.speed;
 	},	
 	
 	// check the state of the video and draw when playing
@@ -82,12 +83,12 @@ var VideoAnalyzer = {
 	// set the basic size
 	setSizes: function(){
 		this.main
-			.width(this.config.width)
-			.height(this.config.height);
+			.width(this.currentWidth)
+			.height(this.currentHeight);
 		this.controls
-			.css('top',this.config.height);
+			.css('top',this.currentHeight);
 		this.tools
-			.css('top',this.config.height);	
+			.css('top',this.currentHeight);	
 	},
 	
 	// scale when screen resizes
@@ -95,23 +96,40 @@ var VideoAnalyzer = {
 		$(window).resize(function(){
 			// window size calculation for retaining scale
 			aspectRatio = VideoAnalyzer.config.width/VideoAnalyzer.config.height;
-			windowWidth = window.innerWidth;
-			height = VideoAnalyzer.config.height;
-			width = height*aspectRatio;	
+			if(window.innerWidth < VideoAnalyzer.config.width)
+				width = window.innerWidth;		
+			else
+				width = VideoAnalyzer.config.width;
+			height = width/aspectRatio;	
 						
 			VideoAnalyzer.main
 				.width(width)
 				.height(height);
+			// set new sizes
+			VideoAnalyzer.currentWidth = width;
+			VideoAnalyzer.currentHeight = height;
+			VideoAnalyzer.setSizes();
 		});
 	},
 	
 	controlBtns: function(){
-		
+		// play and pause
 		$("#playPause").on('click',function(){
 			if(VideoAnalyzer['video'].get(0).paused || VideoAnalyzer['video'].get(0).ended)
 				VideoAnalyzer.video.get(0).play();			
 			else
 				VideoAnalyzer.video.get(0).pause();			
+		})
+		// next and prev
+		$("#next").on('click', function(){
+			VideoAnalyzer.clear();
+			VideoAnalyzer.video.get(0).currentTime = (VideoAnalyzer.video.get(0).currentTime+1);			
+			VideoAnalyzer.video.get(0).pause();			
+		})
+		$("#prev").on('click', function(){
+			VideoAnalyzer.clear();
+			VideoAnalyzer.video.get(0).currentTime = (VideoAnalyzer.video.get(0).currentTime-1);	
+			VideoAnalyzer.video.get(0).pause();			
 		})
 		
 		
