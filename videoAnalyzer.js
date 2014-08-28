@@ -34,14 +34,16 @@ var VideoAnalyzer = {
 	
 	// check the state of the video and draw when playing
 	checkVideoState: function(){
-		if(!$('video').get(0).paused){ VideoAnalyzer.drawVideo(VideoAnalyzer.video.get(0),VideoAnalyzer.config.width,VideoAnalyzer.config.height);}
+		if(!$('video').get(0).paused){ 
+			VideoAnalyzer.drawVideo(); 
+		}
 		else{ clearTimeout(this.timeout); }		
 		this.timeout = setTimeout(VideoAnalyzer.checkVideoState,20);			
 	},
 	
-	drawVideo: function(v,w,h){
-		console.log(w+':'+h);
-		VideoAnalyzer.videoCtx.drawImage(v,0,0,w,h);	
+	drawVideo: function(){
+		this.videoFrame.width = this.videoFrame.width;
+		this.videoCtx.drawImage(VideoAnalyzer['video'].get(0),0,0,VideoAnalyzer.config.width,VideoAnalyzer.config.height);	
 	},
 		
 	// clear entire drawingCanvas
@@ -63,8 +65,7 @@ var VideoAnalyzer = {
   			}).appendTo('.tools')
   				.html('<img src="img/tools/'+value+'.png" />')
   				.on('click',function(event){
-  					this.currentTool = $(this).attr('data-id');		
-  					console.log(this.currentTool);			
+  					this.currentTool = $(this).attr('data-id');				
   				});
 		})	
 	},
@@ -85,7 +86,10 @@ var VideoAnalyzer = {
 		this.videoFrame
 			.width(this.config.width)
 			.height(this.config.height);
-		this.drawFrame
+		$("video")
+			.width(this.config.width)
+			.height(this.config.height);
+		$("videoFrame")
 			.width(this.config.width)
 			.height(this.config.height);
 		this.tools
@@ -95,7 +99,7 @@ var VideoAnalyzer = {
 	// scale when screen resizes
 	scaleSizes: function(){
 		$(window).resize(function(){
-			alert('changed');
+			console.log(VideoAnalyzer.video.get(0));
 		});
 	}
 			
