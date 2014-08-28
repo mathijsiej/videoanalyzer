@@ -7,7 +7,7 @@
 var VideoAnalyzer = {
 	
 	// variables
-	main: $("#main"),drawFrame: $("#drawFrame"),videoFrame: $("#videoFrame"),video: $("video"),tools: $("#tools"),
+	main: $("#main"),drawFrame: $("#drawFrame"),videoFrame: $("#videoFrame"),video: $("#video"),tools: $("#tools"), controls: $("#controls"),
 	
 	// contexts
 	drawCtx: drawFrame.getContext('2d'), videoCtx: videoFrame.getContext('2d'), 
@@ -30,20 +30,25 @@ var VideoAnalyzer = {
 		this.checkVideoState();
 		this.showTools();					
 		this.scaleSizes();
+		this.controlBtns();	
+		VideoAnalyzer.video.get(0).pause();
 	},	
 	
 	// check the state of the video and draw when playing
 	checkVideoState: function(){
-		if(!$('video').get(0).paused){ 
-			VideoAnalyzer.drawVideo(); 
-		}
-		else{ clearTimeout(this.timeout); }		
+		VideoAnalyzer.drawVideo(); 	
 		this.timeout = setTimeout(VideoAnalyzer.checkVideoState,20);			
 	},
 	
 	drawVideo: function(){
-		this.videoFrame.width = this.videoFrame.width;
-		this.videoCtx.drawImage(VideoAnalyzer['video'].get(0),0,0,VideoAnalyzer.config.width,VideoAnalyzer.config.height);	
+		if(VideoAnalyzer['video'].get(0).paused || VideoAnalyzer['video'].get(0).ended){
+			return false;
+			clearTimeout(this.timeout);
+		}
+		vf = document.getElementById('videoFrame');
+		vf.width = VideoAnalyzer.config.width;
+		vf.height = VideoAnalyzer.config.height;
+		this.videoCtx.drawImage(document.getElementById('video'),0,0,VideoAnalyzer.config.width,VideoAnalyzer.config.height);	
 	},
 		
 	// clear entire drawingCanvas
@@ -71,8 +76,7 @@ var VideoAnalyzer = {
 	},
 	
 	crossOrigin: function(){
-		this.drawFrame.crossOrigin = 'anonymous';
-		// this.video.crossOrigin = 'anonymous';		
+		this.drawFrame.crossOrigin = 'anonymous';		
 	},
 	
 	// set the basic size
@@ -80,18 +84,8 @@ var VideoAnalyzer = {
 		this.main
 			.width(this.config.width)
 			.height(this.config.height);
-		this.video
-			.width(this.config.width)
-			.height(this.config.height);
-		this.videoFrame
-			.width(this.config.width)
-			.height(this.config.height);
-		$("video")
-			.width(this.config.width)
-			.height(this.config.height);
-		$("videoFrame")
-			.width(this.config.width)
-			.height(this.config.height);
+		this.controls
+			.css('top',this.config.height);
 		this.tools
 			.css('top',this.config.height);	
 	},
@@ -99,8 +93,28 @@ var VideoAnalyzer = {
 	// scale when screen resizes
 	scaleSizes: function(){
 		$(window).resize(function(){
-			console.log(VideoAnalyzer.video.get(0));
+			// window size calculation for retaining scale
+			aspectRatio = VideoAnalyzer.config.width/VideoAnalyzer.config.height;
+			windowWidth = window.innerWidth;
+			height = VideoAnalyzer.config.height;
+			width = height*aspectRatio;	
+						
+			VideoAnalyzer.main
+				.width(width)
+				.height(height);
 		});
+	},
+	
+	controlBtns: function(){
+		
+		$("#playPause").on('click',function(){
+			if(VideoAnalyzer['video'].get(0).paused || VideoAnalyzer['video'].get(0).ended)
+				VideoAnalyzer.video.get(0).play();			
+			else
+				VideoAnalyzer.video.get(0).pause();			
+		})
+		
+		
 	}
 			
 		
