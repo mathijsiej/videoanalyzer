@@ -8,7 +8,8 @@ var VideoAnalyzer = {
 	
 	// variables
 	currentTool: 0,	timeout: false, currentWidth: 0, currentHeight: 0, speed: 1,
-	main: $("#main"),drawFrame: $("#drawFrame"),videoFrame: $("#videoFrame"),video: $("#video"),tools: $("#tools"), controls: $("#controls"),
+	main: $("#main"),drawFrame: $("#drawFrame"),videoFrame: $("#videoFrame"),video: $("#video"),tools: $("#tools"), controls: $("#controls"), loadingbar: $("#loadingbar"),
+	speedIndicator: $("#speedIndicator"),
 	
 	// contexts
 	drawCtx: drawFrame.getContext('2d'), videoCtx: videoFrame.getContext('2d'), 
@@ -23,29 +24,57 @@ var VideoAnalyzer = {
 	// initialize
 	init: function(config){
 		$.extend(this.config,config);
-		this.currentWidth =  this.config.width;  
-		this.currentHeight = this.config.height;	
-		this.crossOrigin();			
-		this.setSizes();
-		this.checkVideoState();
-		this.showTools();					
-		this.scaleSizes();
-		this.controlBtns();	
-		this.video.get(0).pause();
-		this.video.get(0).playbackRate = this.speed;
+		this.loader();		
 	},	
+	
+	loader: function(){
+		// loader
+		var videoDuration = $("video").prop('duration');
+		if ($("video").prop('readyState')) {
+        	var buffered = $("video").prop("buffered").end(0);
+        	var percent = 100 * buffered / videoDuration;
+        	percent = Math.round((percent*10)/10);
+        	VideoAnalyzer.loadingbar.animate({
+        		width: (VideoAnalyzer.config.width/100)*percent+'px'
+        	},1,"linear");
+        	VideoAnalyzer.loadingbar.html(percent+'%');
+	        if (percent > 95) {	        		        	
+	        	clearTimeout(VideoAnalyzer.timeout); 
+				VideoAnalyzer.startup();				 
+	        }        
+       }
+       
+       this.timeout = setTimeout(VideoAnalyzer.loader,1);
+		
+	},
+	
+	startup: function(){
+		VideoAnalyzer.currentWidth =  VideoAnalyzer.config.width;  
+		VideoAnalyzer.currentHeight = VideoAnalyzer.config.height;	
+		VideoAnalyzer.crossOrigin();			
+		VideoAnalyzer.setSizes();
+		VideoAnalyzer.checkVideoState();
+		VideoAnalyzer.showTools();					
+		VideoAnalyzer.scaleSizes();
+		VideoAnalyzer.controlBtns();	
+		VideoAnalyzer.video.get(0).pause();
+		VideoAnalyzer.video.get(0).playbackRate = VideoAnalyzer.speed; 
+		VideoAnalyzer.video.get(0).currentTime = 0;		 
+		VideoAnalyzer.loadingbar.hide();
+		VideoAnalyzer.main.show(); 
+		
+	},
 	
 	// check the state of the video and draw when playing
 	checkVideoState: function(){
-		VideoAnalyzer.drawVideo(); 	
-		this.timeout = setTimeout(VideoAnalyzer.checkVideoState,20);			
+		if(VideoAnalyzer['video'].get(0).paused || VideoAnalyzer['video'].get(0).ended)
+			clearTimeout(this.timeout);
+		else
+			VideoAnalyzer.drawVideo();			
+		this.timeout = setTimeout(VideoAnalyzer.checkVideoState,20);		
 	},
 	
-	drawVideo: function(){
-		if(VideoAnalyzer['video'].get(0).paused || VideoAnalyzer['video'].get(0).ended){
-			return false;
-			clearTimeout(this.timeout);
-		}
+	drawVideo: function(){		
 		vf = document.getElementById('videoFrame');
 		vf.width = VideoAnalyzer.config.width;
 		vf.height = VideoAnalyzer.config.height;
@@ -115,25 +144,36 @@ var VideoAnalyzer = {
 	controlBtns: function(){
 		// play and pause
 		$("#playPause").on('click',function(){
-			if(VideoAnalyzer['video'].get(0).paused || VideoAnalyzer['video'].get(0).ended)
-				VideoAnalyzer.video.get(0).play();			
-			else
-				VideoAnalyzer.video.get(0).pause();			
+			if(VideoAnalyzer['video'].get(0).paused || VideoAnalyzer['video'].get(0).ended){
+				VideoAnalyzer.video.get(0).play();	
+				$(this).html('pause');		
+			}
+			else{
+				VideoAnalyzer.video.get(0).pause();
+				$(this).html('play');
+			}			
 		})
 		// next and prev
 		$("#next").on('click', function(){
-			VideoAnalyzer.clear();
 			VideoAnalyzer.video.get(0).currentTime = (VideoAnalyzer.video.get(0).currentTime+1);			
 			VideoAnalyzer.video.get(0).pause();			
 		})
 		$("#prev").on('click', function(){
-			VideoAnalyzer.clear();
 			VideoAnalyzer.video.get(0).currentTime = (VideoAnalyzer.video.get(0).currentTime-1);	
 			VideoAnalyzer.video.get(0).pause();			
 		})
 		
+		// speedup and speeddown
+		$("#speedUp").on('click', function(){			
+			VideoAnalyzer.video.get(0).playbackRate = (VideoAnalyzer.video.get(0).playbackRate+0.1);
+			var rounded = Math.round( VideoAnalyzer.video.get(0).playbackRate * 10 ) / 10;
+        	VideoAnalyzer.speedIndicator.html(rounded);			
+		})
+		$("#speedDown").on('click', function(){
+			VideoAnalyzer.video.get(0).playbackRate = (VideoAnalyzer.video.get(0).playbackRate-0.1);
+			var rounded = Math.round( VideoAnalyzer.video.get(0).playbackRate * 10 ) / 10;
+        	VideoAnalyzer.speedIndicator.html(rounded);	
+		})		
 		
-	}
-			
-		
+	}	
 }
