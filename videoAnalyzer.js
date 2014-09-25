@@ -177,3 +177,5 @@ var VideoAnalyzer = {
 		
 	}	
 }
+
+alert('testing GIT');
